@@ -76,9 +76,9 @@
 
       function getMessages() {
         // Send a request to start a new task and get the task ID
-        fetch(`${apiUrl}`, {
+        fetch(apiUrl, {
           method: "POST",
-          body: JSON.stringify({ service: "get recent messages", data: "" }),
+          body: JSON.stringify({ service: "get recent messages in a Javascript list format: [message1, message2, etc]", data: "" }),
           headers: {
             "Content-Type": "application/json",
           },
@@ -97,10 +97,19 @@
                   status = data.result;
                   // If the task is complete, display the messages and stop polling
                   if (status !== "running") {
-                    messages = status.split("\n");
+                    status = status.replace(/'/g, '"');
+                    // messages = []
+                    try {
+                        messages = JSON.parse(status);
+                        console.log("2:", messages);
+                    } catch (e) {
+                        console.log("error:", e);
+                        messages = status.split("\n");
+                        console.log("3:", messages);
+                    }
                     clearInterval(pollInterval);
                     const messageList = document.getElementById("message-list");
-                    messageList.innerHTML = messages.map((message) => `<li>${message}</li>`).join("");
+                    messageList.innerHTML = status.map((message) => `<li>${message}</li>`).join("");
                     getMessages();
                   }
                 });

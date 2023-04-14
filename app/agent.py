@@ -19,7 +19,7 @@ ACTIONS: dict = {
 }
 
 
-def fetch(memory: pd.DataFrame, to_retrieve: str, depth: int = 1) -> str:
+def fetch(memory: pd.DataFrame, to_retrieve: str, depth: int = 50) -> str:
     """Trying to retrieve information from memory
 
     :param memory: A dataframe of the texts and their embeddings
