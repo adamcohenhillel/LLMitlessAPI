@@ -56,29 +56,26 @@
 
       function sendMessage(message) {
         // Send a request to start a new task and get the task ID
-        fetch(`${apiUrl}/start-task`)
-          .then((response) => response.json())
-          .then((data) => {
-            const taskId = data.task_id;
-            // Send a request to add the message to the task
-            fetch(`${apiUrl}`, {
+        fetch(`${apiUrl}`, {
               method: "POST",
               body: JSON.stringify({
                 service: "send message",
                 data: message,
               }),
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-          });
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
       }
 
       function getMessages() {
         // Send a request to start a new task and get the task ID
         fetch(apiUrl, {
           method: "POST",
-          body: JSON.stringify({ service: "get recent messages in a Javascript list format: [message1, message2, etc]", data: "" }),
+          body: JSON.stringify({
+            service: "get recent messages in a Javascript list format: [message1, message2, etc]",
+            data: "",
+          }),
           headers: {
             "Content-Type": "application/json",
           },
@@ -100,16 +97,17 @@
                     status = status.replace(/'/g, '"');
                     // messages = []
                     try {
-                        messages = JSON.parse(status);
-                        console.log("2:", messages);
+                      messages = JSON.parse(status);
+                      console.log("2:", messages);
+                      console.log("2:", typeof messages)
                     } catch (e) {
-                        console.log("error:", e);
-                        messages = status.split("\n");
-                        console.log("3:", messages);
+                      console.log("error:", e);
+                      messages = status.split("\n");
+                      console.log("3:", messages);
                     }
                     clearInterval(pollInterval);
                     const messageList = document.getElementById("message-list");
-                    messageList.innerHTML = status.map((message) => `<li>${message}</li>`).join("");
+                    messageList.innerHTML = messages.map((message) => `<li>${message}</li>`).join("");
                     getMessages();
                   }
                 });
