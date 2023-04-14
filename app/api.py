@@ -32,7 +32,7 @@ class RequestBody(BaseModel):
 tasks_status: Dict[str, str] = {}
 
 
-@app.post('/a')
+@app.post('/')
 async def trigger_new_task(
     body: RequestBody,
     background_tasks: BackgroundTasks

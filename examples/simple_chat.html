@@ -1,163 +1,122 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<title>Chat Page</title>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-	<div id="messages"></div>
-	<form>
-		<label for="name">Name:</label>
-		<input type="text" id="name" name="name"><br><br>
-		<label for="message">Message:</label>
-		<input type="text" id="message" name="message"><br><br>
-		<input type="submit" value="Send Message">
-	</form>
-
-	<script>
-		// Define the API endpoints
-        const ENDPOINT = "http://127.0.0.1:8000/a";
-
-
-		// Function to update the messages div
-		function updateMessages(messages) {
-			const messagesDiv = document.getElementById('messages');
-			messagesDiv.innerHTML = '';
-			messages.forEach(message => {
-				messagesDiv.innerHTML += `<p>${message.name}: ${message.message}</p>`;
-			});
-		}
-
-		// Function to poll for new messages
-		function pollMessages() {
-			fetch(ENDPOINT, {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ service: "get all messages", data: "" }),
-              })
-			.then(response => response.json())
-			.then(data => {
-				updateMessages(data);
-			});
-		}
-
-		// Start polling for new messages
-		setInterval(pollMessages, 1000); // Poll every 1 second
-
-		// Handle form submission
-		const form = document.querySelector('form');
-		form.addEventListener('submit', event => {
-			event.preventDefault();
-
-			// Get the name and message from the form
-			const nameInput = document.getElementById('name');
-			const messageInput = document.getElementById('message');
-			const name = nameInput.value;
-			const message = messageInput.value;
-
-			// Send the message to the API
-			fetch(ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            service: "send a message",
-            data: `Name: ${name}, Message: ${message}`,
-          }),
-        })
-			.then(response => response.json())
-			.then(data => {
-				// Clear the form
-				nameInput.value = '';
-				messageInput.value = '';
-			});
-		});
-	</script>
-</body>
-</html>
-
-
-<!-- <!DOCTYPE html>
-<html>
   <head>
-    <title>Chat Page</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple HTML Chat</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      form {
+        display: flex;
+        margin: 10px;
+      }
+      input[type="text"] {
+        flex: 1;
+        margin-right: 10px;
+        padding: 10px;
+        font-size: 16px;
+      }
+      button[type="submit"] {
+        padding: 10px;
+        font-size: 16px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button[type="submit"]:hover {
+        background-color: #3e8e41;
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      li {
+        padding: 10px;
+        margin: 5px;
+        background-color: #f1f1f1;
+        border-radius: 5px;
+      }
+    </style>
   </head>
   <body>
-    <div id="messages"></div>
-    <form>
-      <label for="name">Name:</label>
-      <input type="text" id="name" name="name" /><br /><br />
-      <label for="message">Message:</label>
-      <input type="text" id="message" name="message" /><br /><br />
-      <input type="submit" value="Send Message" />
+    <form id="message-form">
+      <input type="text" id="message-input" placeholder="Type your message here..." />
+      <button type="submit">Send</button>
     </form>
-
+    <ul id="message-list"></ul>
     <script>
-      // Define the API endpoints
-      const ENDPOINT = "http://127.0.0.1:8000/a";
+      const apiUrl = "http://127.0.0.1:8000";
 
-      // Handle form submission
-      const form = document.querySelector("form");
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
+      function sendMessage(message) {
+        // Send a request to start a new task and get the task ID
+        fetch(`${apiUrl}/start-task`)
+          .then((response) => response.json())
+          .then((data) => {
+            const taskId = data.task_id;
+            // Send a request to add the message to the task
+            fetch(`${apiUrl}`, {
+              method: "POST",
+              body: JSON.stringify({
+                service: "send message",
+                data: message,
+              }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+          });
+      }
 
-        console.log('submit');
-        console.log(event);
-
-        // Get the name and message from the form
-        const nameInput = document.getElementById("name");
-        const messageInput = document.getElementById("message");
-        const name = nameInput.value;
-        const message = messageInput.value;
-
-        // Send the message to the API
-        fetch(ENDPOINT, {
+      function getMessages() {
+        // Send a request to start a new task and get the task ID
+        fetch(`${apiUrl}`, {
           method: "POST",
+          body: JSON.stringify({ service: "get recent messages", data: "" }),
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            service: "send a message",
-            data: `Name: ${name}, Message: ${message}`,
-          }),
         })
           .then((response) => response.json())
           .then((data) => {
-            // Poll the API until the message is ready
-            const poll = setInterval(() => {
-              fetch(`${ENDPOINT}${data.task_id}` , {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ service: "get all messages", data: "" }),
-              })
+            console.log(data);
+            const taskId = data.task_id;
+            let messages = [];
+            let status = "pending";
+            // Poll the task status until it is complete
+            const pollInterval = setInterval(() => {
+              fetch(`${apiUrl}/${taskId}`, { method: "GET" })
                 .then((response) => response.json())
                 .then((data) => {
-                  // Check if the message is ready
-                  const message = data.find((m) => m.status !== "running" && m.id === data.id);
-                  if (message) {
-                    // Display the message on the page
-                    const messagesDiv = document.getElementById("messages");
-                    messagesDiv.innerHTML += `<p>${message.name}: ${message.message}</p>`;
-
-                    // Clear the form
-                    nameInput.value = "";
-                    messageInput.value = "";
-
-                    // Stop polling
-                    clearInterval(poll);
+                  status = data.result;
+                  // If the task is complete, display the messages and stop polling
+                  if (status !== "running") {
+                    messages = status.split("\n");
+                    clearInterval(pollInterval);
+                    const messageList = document.getElementById("message-list");
+                    messageList.innerHTML = messages.map((message) => `<li>${message}</li>`).join("");
+                    getMessages();
                   }
                 });
-            }, 1000); // Poll every 1 second
+            }, 1000);
           });
+      }
+
+      document.getElementById("message-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const messageInput = document.getElementById("message-input");
+        const message = messageInput.value;
+        sendMessage(message);
+        messageInput.value = "";
       });
+
+      getMessages();
     </script>
   </body>
-</html> -->
+</html>
